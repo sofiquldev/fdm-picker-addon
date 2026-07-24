@@ -1,0 +1,24 @@
+{
+  "uuid": "videopicker",
+  "name": "Video Picker",
+  "description": "Download videos from YouTube, Facebook, Instagram, X (Twitter), and many other sites using yt-dlp. By Sofiqul Islam (sofiqul.dev).",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "mediaParser": true,
+  "mediaListParser": true,
+  "minApiVersion": 6,
+  "minFeaturesLevel": 3,
+  "targetApiVersion": 6,
+  "dependencies": {
+    "Python": { "minVersion": "3.10" }
+  },
+  "permissions": [
+    "launchPython"
+  ],
+  "scripts": [
+    "tools.js",
+    "msabstractparser.js",
+    "msparser.js",
+    "msbatchparser.js"
+  ]
+}

@@ -1,0 +1,12 @@
+# Generated / local
+addon/yt-dlp/
+dist/
+*.fda
+*.zip
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.extension-id.txt
+bridge/host.log
+bridge/host-launcher.bat

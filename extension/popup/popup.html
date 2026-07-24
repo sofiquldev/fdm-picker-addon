@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Video Picker for FDM</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <img src="../icons/icon32.png" width="28" height="28" alt="Video Picker" />
+      <div class="titles">
+        <strong>Video Picker</strong>
+        <span id="pageMeta">…</span>
+      </div>
+    </header>
+
+    <p id="status" class="status" hidden></p>
+
+    <ul id="mediaList" class="list"></ul>
+    <p id="empty" class="empty">No video detected yet. Play the video on the page, then open this popup again.</p>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

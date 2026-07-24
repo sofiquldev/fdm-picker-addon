@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build add-on & extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Normalize scripts for Linux
+        run: |
+          sed -i 's/\r$//' scripts/*.sh bridge/*.sh
+          chmod +x scripts/*.sh bridge/install-unix.sh
+
+      - name: Build FDM add-on
+        run: bash scripts/build-addon.sh
+
+      - name: Build browser extension
+        run: bash scripts/build-extension.sh
+
+      - name: Package native bridge
+        run: |
+          mkdir -p dist
+          rm -f dist/videopicker-bridge.zip
+          (
+            cd bridge
+            zip -qr ../dist/videopicker-bridge.zip . \
+              -x "*.log" -x "host-launcher.bat"
+          )
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: videopicker-dist
+          path: |
+            dist/VideoPicker.fda
+            dist/videopicker-extension.zip
+            dist/videopicker-bridge.zip
+          if-no-files-found: error
+          retention-days: 14

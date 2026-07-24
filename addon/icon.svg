@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Video Picker">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a6cff"/>
+      <stop offset="100%" stop-color="#0b3d91"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#g)"/>
+  <path fill="#fff" d="M36 40h56a8 8 0 0 1 8 8v32a8 8 0 0 1-8 8H36a8 8 0 0 1-8-8V48a8 8 0 0 1 8-8zm22 12v28l24-14-24-14z"/>
+  <path fill="#7ec8ff" d="M40 96h48v6H40z"/>
+  <path fill="#fff" d="M58 104l6 10 6-10H58z"/>
+</svg>

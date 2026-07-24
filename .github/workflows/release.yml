@@ -1,0 +1,191 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.0.0). Created if missing."
+        required: true
+        type: string
+      yt_dlp_version:
+        description: "yt-dlp tag to bundle (leave empty for script default)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          case "$TAG" in
+            v*) ;;
+            *) TAG="v${TAG}" ;;
+          esac
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Write release body
+        id: notes
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          BODY_FILE="$RUNNER_TEMP/release-body.md"
+          CHANGELOG="CHANGELOG.md"
+
+          if [[ ! -f "$CHANGELOG" ]]; then
+            echo "Missing $CHANGELOG" >&2
+            exit 1
+          fi
+
+          # Extract section for this version: ## [1.0.0] ... until next ## heading
+          USER_NOTES="$(awk -v ver="$VERSION" '
+            BEGIN { capturing = 0 }
+            /^## \[Unreleased\]/ { capturing = 0; next }
+            $0 ~ ("^## \\[" ver "\\]") { capturing = 1; next }
+            /^## / { if (capturing) exit }
+            capturing { print }
+          ' "$CHANGELOG" | sed -e 's/[[:space:]]*$//' -e '/./,$!d')"
+
+          if [[ -z "$USER_NOTES" ]]; then
+            echo "No CHANGELOG.md section found for version $VERSION" >&2
+            echo "Add a heading like: ## [$VERSION] - YYYY-MM-DD" >&2
+            exit 1
+          fi
+
+          {
+            echo "## Video Picker for Free Download Manager ${VERSION}"
+            echo
+            echo "## What's new"
+            echo
+            printf '%s\n' "$USER_NOTES"
+            echo
+            echo "### Downloads"
+            echo
+            echo "| File | Purpose |"
+            echo "|------|---------|"
+            echo "| \`VideoPicker-${VERSION}.fda\` | FDM add-on (install via Add-ons → Install from file) |"
+            echo "| \`videopicker-extension-${VERSION}.zip\` | Browser extension package |"
+            echo "| \`videopicker-bridge-${VERSION}.zip\` | Native messaging bridge + installers |"
+            echo
+            echo "Full history: [CHANGELOG.md](CHANGELOG.md)"
+            echo
+            echo "See [docs/INSTALL.md](docs/INSTALL.md) for setup on Windows, macOS, and Linux."
+          } > "$BODY_FILE"
+
+          echo "body_path=${BODY_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Normalize scripts for Linux
+        run: |
+          sed -i 's/\r$//' scripts/*.sh bridge/*.sh
+          chmod +x scripts/*.sh bridge/install-unix.sh
+
+      - name: Build FDM add-on
+        env:
+          YT_DLP_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.yt_dlp_version || '' }}
+        run: |
+          if [ -n "$YT_DLP_VERSION" ]; then
+            bash scripts/build-addon.sh "$YT_DLP_VERSION"
+          else
+            bash scripts/build-addon.sh
+          fi
+
+      - name: Build browser extension
+        run: bash scripts/build-extension.sh
+
+      - name: Package native bridge
+        run: |
+          mkdir -p dist
+          rm -f dist/videopicker-bridge.zip
+          (
+            cd bridge
+            zip -qr ../dist/videopicker-bridge.zip . \
+              -x "*.log" -x "host-launcher.bat"
+          )
+
+      - name: Rename artifacts with version
+        run: |
+          VERSION="${{ steps.meta.outputs.version }}"
+          mv dist/VideoPicker.fda "dist/VideoPicker-${VERSION}.fda"
+          mv dist/videopicker-extension.zip "dist/videopicker-extension-${VERSION}.zip"
+          mv dist/videopicker-bridge.zip "dist/videopicker-bridge-${VERSION}.zip"
+          ls -lh dist/
+
+      - name: Verify release artifacts
+        run: |
+          VERSION="${{ steps.meta.outputs.version }}"
+          for f in \
+            "dist/VideoPicker-${VERSION}.fda" \
+            "dist/videopicker-extension-${VERSION}.zip" \
+            "dist/videopicker-bridge-${VERSION}.zip"
+          do
+            if [[ ! -f "$f" ]]; then
+              echo "Missing artifact: $f" >&2
+              ls -la dist/ >&2 || true
+              exit 1
+            fi
+            ls -lh "$f"
+          done
+
+      - name: Create git tag (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          TAG="${{ steps.meta.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Publish GitHub Release with assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          BODY_PATH: ${{ steps.notes.outputs.body_path }}
+        run: |
+          FDA="dist/VideoPicker-${VERSION}.fda"
+          EXT="dist/videopicker-extension-${VERSION}.zip"
+          BRIDGE="dist/videopicker-bridge-${VERSION}.zip"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Updating existing release $TAG"
+            gh release edit "$TAG" \
+              --title "Video Picker ${VERSION}" \
+              --notes-file "$BODY_PATH"
+            gh release upload "$TAG" "$FDA" "$EXT" "$BRIDGE" --clobber
+          else
+            echo "Creating release $TAG"
+            gh release create "$TAG" "$FDA" "$EXT" "$BRIDGE" \
+              --title "Video Picker ${VERSION}" \
+              --notes-file "$BODY_PATH"
+          fi
+
+          echo "Release assets:"
+          gh release view "$TAG" --json assets --jq '.assets[].name'

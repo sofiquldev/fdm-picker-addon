@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "Video Picker for FDM",
+  "short_name": "Video Picker",
+  "version": "1.0.0",
+  "description": "Find videos on the page and send them to Free Download Manager. By Sofiqul Islam.",
+  "author": "Sofiqul Islam",
+  "homepage_url": "https://sofiqul.dev",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnc0T2M7AS+5prw2jRvSOVz46fo4t/8A9iK1HkxW+EAirCVxuEOJH6zCydCCWqfeQ+OYoAnq5VA8bjTLVxYL5F0Bn18ZUouxN9xgxKQF4mhDZk6xXjkgKGtF9suqAnX1KdWP7m8CeHBt7iBOwUFyWrikJ2/fYXypiYonOxIYNSG323tpeTA2ONCzKAyFiSsjdcC46vv04aIAN+8LmkU3A1aTtIcLHYOpLHtHcTTpgvgLjN8mYT2WjvVcP3YGt1FI936ttJOm7lgfAG/WW8tDJg8nf0c96T32dmfi+5YT+ELLDSg7rp/6gnLIIvyr7ZyHq9SKjLzMqZUmOuiZvV6xzQQIDAQAB",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "videopicker@fdm.local",
+      "strict_min_version": "109.0"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Video Picker",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "nativeMessaging",
+    "webRequest",
+    "tabs"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "content/known-sites.js",
+        "content/dom-sniffer.js",
+        "content/overlay.js"
+      ],
+      "css": ["content/overlay.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

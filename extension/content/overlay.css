@@ -1,0 +1,46 @@
+.vp-fdm-overlay-btn {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  z-index: 2147483646 !important;
+  width: 36px !important;
+  height: 36px !important;
+  border: none !important;
+  border-radius: 10px !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+  background: rgba(16, 22, 30, 0.82) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+  opacity: 0.92 !important;
+  transition: transform 0.12s ease, background 0.12s ease, opacity 0.12s ease !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+.vp-fdm-overlay-btn:hover {
+  transform: scale(1.06) !important;
+  background: #1a6cff !important;
+  opacity: 1 !important;
+}
+
+.vp-fdm-overlay-btn.vp-busy {
+  opacity: 0.55 !important;
+  pointer-events: none !important;
+}
+
+.vp-fdm-overlay-btn.vp-ok {
+  background: #0f9d8a !important;
+}
+
+.vp-fdm-overlay-btn.vp-err {
+  background: #c0392b !important;
+}
+
+/* Keep button visible when hovering player */
+video:hover ~ .vp-fdm-overlay-btn,
+[data-vp-overlay="1"]:hover > .vp-fdm-overlay-btn {
+  opacity: 1 !important;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "org.fdm.videopicker",
+  "description": "Video Picker for FDM - sends video URLs to Free Download Manager",
+  "path": "HOST_PATH_PLACEHOLDER",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://EXTENSION_ID_PLACEHOLDER/"
+  ],
+  "allowed_extensions": [
+    "videopicker@fdm.local"
+  ]
+}
